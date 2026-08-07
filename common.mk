@@ -26,8 +26,11 @@ EXTRA_LDFLAGS   ?=
 LDFLAGS         ?= -s -w $(LDFLAGS_VERSION) $(EXTRA_LDFLAGS)
 TEST_FLAGS      ?= -race -count=1
 
+DIST_DIR  ?= dist
+PLATFORMS ?= linux/amd64 linux/arm64 darwin/arm64 darwin/amd64 windows/amd64
+
 .DEFAULT_GOAL := help
-.PHONY: help build run test cover lint tidy ci clean update-mk
+.PHONY: help build run test cover lint tidy ci clean update-mk dist release
 
 help: ## Show this help
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) | sort | \
@@ -55,8 +58,29 @@ tidy: ## Tidy and verify modules
 
 ci: tidy lint test ## What CI runs
 
+dist: ## Cross-compile for every platform in PLATFORMS
+	@rm -rf $(DIST_DIR) && mkdir -p $(DIST_DIR)
+	@for p in $(PLATFORMS); do \
+	   os=$${p%/*}; arch=$${p#*/}; \
+	   out=$(DIST_DIR)/$(BINARY)_$(VERSION)_$${os}_$${arch}; \
+	   [ "$$os" = "windows" ] && out=$$out.exe || true; \
+	   echo "  -> $$out"; \
+	   CGO_ENABLED=0 GOOS=$$os GOARCH=$$arch \
+	     $(GO) build -trimpath -ldflags '$(LDFLAGS)' -o $$out $(CMD_PATH) || exit 1; \
+	 done
+
+release: dist ## Archive the binaries and write checksums
+	@cd $(DIST_DIR) && for f in $(BINARY)_*; do \
+	   case $$f in \
+	     *.exe) zip -q $${f%.exe}.zip $$f && rm $$f ;; \
+	     *)     tar czf $$f.tar.gz $$f && rm $$f ;; \
+	   esac; \
+	 done; \
+	 (sha256sum * 2>/dev/null || shasum -a 256 *) > SHA256SUMS
+	@ls -1 $(DIST_DIR)
+
 clean: ## Remove build artefacts
-	rm -rf $(BUILD_DIR) coverage.out
+	rm -rf $(BUILD_DIR) $(DIST_DIR) coverage.out
 
 update-mk: ## Fetch the latest common.mk from go-mk
 	curl -fsSL $(MK_SOURCE) -o common.mk
