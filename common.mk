@@ -25,6 +25,7 @@ LDFLAGS_VERSION ?= -X $(VERSION_PKG).Version=$(VERSION) \
 EXTRA_LDFLAGS   ?=
 LDFLAGS         ?= -s -w $(LDFLAGS_VERSION) $(EXTRA_LDFLAGS)
 TEST_FLAGS      ?= -race -count=1
+GO_BUILD_FLAGS  ?= -trimpath
 
 DIST_DIR  ?= dist
 PLATFORMS ?= linux/amd64 linux/arm64 darwin/arm64 darwin/amd64 windows/amd64
@@ -38,7 +39,7 @@ help: ## Show this help
 
 build: ## Build into bin/
 	@mkdir -p $(BUILD_DIR)
-	$(GO) build -trimpath -ldflags '$(LDFLAGS)' -o $(BUILD_DIR)/$(BINARY) $(CMD_PATH)
+	$(GO) build $(GO_BUILD_FLAGS) -ldflags '$(LDFLAGS)' -o $(BUILD_DIR)/$(BINARY) $(CMD_PATH)
 
 run: ## Run the app (ARGS="...")
 	$(GO) run -ldflags '$(LDFLAGS)' $(CMD_PATH) $(ARGS)
@@ -66,7 +67,7 @@ dist: ## Cross-compile for every platform in PLATFORMS
 	   [ "$$os" = "windows" ] && out=$$out.exe || true; \
 	   echo "  -> $$out"; \
 	   CGO_ENABLED=0 GOOS=$$os GOARCH=$$arch \
-	     $(GO) build -trimpath -ldflags '$(LDFLAGS)' -o $$out $(CMD_PATH) || exit 1; \
+	     $(GO) build $(GO_BUILD_FLAGS) -ldflags '$(LDFLAGS)' -o $$out $(CMD_PATH) || exit 1; \
 	 done
 
 release: dist ## Archive the binaries and write checksums
