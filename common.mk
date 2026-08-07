@@ -4,7 +4,7 @@
 # `make update-mk`. Per-project overrides go in the project Makefile,
 # BEFORE `include common.mk` — every variable here uses `?=`.
 
-MK_SOURCE ?= https://raw.githubusercontent.com/CHANGE-ME/go-mk/main/common.mk
+MK_SOURCE ?= https://raw.githubusercontent.com/alex27riva/go-mk/main/common.mk
 
 GO        ?= go
 MODULE    ?= $(shell awk '/^module /{print $$2}' go.mod)

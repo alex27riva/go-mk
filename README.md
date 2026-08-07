@@ -9,7 +9,7 @@ Create a `Makefile` in the project root:
 
 ```make
 common.mk:
-	@curl -fsSL https://raw.githubusercontent.com/CHANGE-ME/go-mk/main/common.mk -o $@
+	@curl -fsSL https://raw.githubusercontent.com/alex27riva/go-mk/main/common.mk -o $@
 
 include common.mk
 ```
